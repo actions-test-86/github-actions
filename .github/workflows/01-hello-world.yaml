@@ -1,5 +1,5 @@
 name: Hello World # workflow name
-on: [push] # event
+on: [push] #events
 jobs: # it can contain multiple jobs
   hello: # job name
     runs-on: ubuntu-latest # where to run
