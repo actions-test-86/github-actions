@@ -1,20 +1,37 @@
 name: Get Last Commit User IDs
-on: workflow_dispatch
+
+on:
+  workflow_dispatch:
 
 jobs:
   list-committers:
     runs-on: ubuntu-latest
+
+    env:
+      GH_TOKEN: ${{ secrets.ORG_ADMIN_TOKEN }}
+      ORG_NAME: action-test-86
+
     steps:
-      - name: Fetch Last Committer for All Repos
-        env:
-          GH_TOKEN: ${{ secrets.ORG_ADMIN_TOKEN }} # Requires 'repo' and 'read:org' scopes
-          ORG_NAME: "action-test-86"
+      - name: Verify gh auth
         run: |
-          # 1. List all repo names in the organization (handles pagination automatically)
+          gh auth status
+
+      - name: Fetch Last Committer for All Repos
+        run: |
+          set -euo pipefail
+
           REPOS=$(gh api --paginate "/orgs/$ORG_NAME/repos" --jq '.[].name')
 
-          # 2. Iterate through each repo to find the last commit author
           for REPO in $REPOS; do
-            USER_ID=$(gh api "/repos/$ORG_NAME/$REPO/commits?per_page=1" --jq '.[0].author.login // .[0].commit.author.name')
+
+            RESPONSE=$(gh api "/repos/$ORG_NAME/$REPO/commits?per_page=1" 2>/dev/null || echo "[]")
+
+            if [[ "$(echo "$RESPONSE" | jq 'length')" == "0" ]]; then
+              echo "Repo: $REPO | Last Committer: No commits"
+              continue
+            fi
+
+            USER_ID=$(echo "$RESPONSE" | jq -r '.[0].author.login // .[0].commit.author.name // "Unknown"')
+
             echo "Repo: $REPO | Last Committer: $USER_ID"
           done
