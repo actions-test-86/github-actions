@@ -9,7 +9,7 @@ jobs:
 
     env:
       GH_TOKEN: ${{ secrets.ORG_ADMIN_TOKEN }}
-      ORG_NAME: action-test-86
+      ORG_NAME: actions-test-86
 
     steps:
       - name: Verify gh auth
