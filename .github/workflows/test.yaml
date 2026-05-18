@@ -35,3 +35,10 @@ jobs:
 
             echo "Repo: $REPO | Last Committer: $USER_ID"
           done
+              continue
+            fi
+
+            USER_ID=$(echo "$RESPONSE" | jq -r '.[0].author.login // .[0].commit.author.name // "Unknown"')
+
+            echo "Repo: $REPO | Last Committer: $USER_ID"
+          done
