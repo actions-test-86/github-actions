@@ -16,29 +16,12 @@ jobs:
         run: |
           gh auth status
 
-      - name: Fetch Last Committer for All Repos
+      - name: Debug GitHub Access
         run: |
-          set -euo pipefail
+          echo "ORG_NAME=$ORG_NAME"
 
-          REPOS=$(gh api --paginate "/orgs/$ORG_NAME/repos" --jq '.[].name')
+          echo "Authenticated user:"
+          gh auth status
 
-          for REPO in $REPOS; do
-
-            RESPONSE=$(gh api "/repos/$ORG_NAME/$REPO/commits?per_page=1" 2>/dev/null || echo "[]")
-
-            if [[ "$(echo "$RESPONSE" | jq 'length')" == "0" ]]; then
-              echo "Repo: $REPO | Last Committer: No commits"
-              continue
-            fi
-
-            USER_ID=$(echo "$RESPONSE" | jq -r '.[0].author.login // .[0].commit.author.name // "Unknown"')
-
-            echo "Repo: $REPO | Last Committer: $USER_ID"
-          done
-              continue
-            fi
-
-            USER_ID=$(echo "$RESPONSE" | jq -r '.[0].author.login // .[0].commit.author.name // "Unknown"')
-
-            echo "Repo: $REPO | Last Committer: $USER_ID"
-          done
+          echo "Testing org access..."
+          gh api "/orgs/$ORG_NAME"
