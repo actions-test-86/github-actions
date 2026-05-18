@@ -1,0 +1,43 @@
+name: Get Last Commit User IDs
+
+on:
+  workflow_dispatch:
+
+jobs:
+  list-committers:
+    runs-on: ubuntu-latest
+
+    env:
+      GH_TOKEN: ${{ secrets.ORG_ADMIN_TOKEN }}
+      ORG_NAME: action-test-86
+
+    steps:
+      - name: Validate Access
+        run: |
+          gh auth status
+          gh api "/orgs/$ORG_NAME"
+
+      - name: Fetch Last Committer for All Repos
+        run: |
+          set -eo pipefail
+
+          REPOS=$(gh api --paginate "/orgs/$ORG_NAME/repos" --jq '.[].name')
+
+          echo "Repositories found:"
+          echo "$REPOS"
+
+          for REPO in $REPOS; do
+
+            echo "Checking repo: $REPO"
+
+            RESPONSE=$(gh api "/repos/$ORG_NAME/$REPO/commits?per_page=1" 2>/dev/null || echo "[]")
+
+            if [[ "$(echo "$RESPONSE" | jq 'length')" == "0" ]]; then
+              echo "Repo: $REPO | Last Committer: No commits"
+              continue
+            fi
+
+            USER_ID=$(echo "$RESPONSE" | jq -r '.[0].author.login // .[0].commit.author.name // "Unknown"')
+
+            echo "Repo: $REPO | Last Committer: $USER_ID"
+          done
